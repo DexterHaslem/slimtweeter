@@ -1,0 +1,162 @@
+﻿<Window x:Class="slimTweet.MainView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:slimTweet="clr-namespace:slimTweet"
+        xmlns:componentModel="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+        SnapsToDevicePixels="True" UseLayoutRounding="False"
+        Title="slimTweeter" Height="450" Width="650" MinWidth="150"
+		Loaded="OnLoaded"
+		TextOptions.TextFormattingMode="Display"
+		RenderOptions.ClearTypeHint="Enabled"
+		Closing="OnClosing">
+	<Window.Resources>
+		<BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+		<slimTweet:NotBooleanToVisibilityConverter x:Key="NotBooleanToVisibilityConverter" />
+		<slimTweet:ImageUrlSourceConverter x:Key="ImageUrlSourceConverter" />
+		<slimTweet:RelativeTimeConverter x:Key="RelativeTimeConverter" />
+
+		<CollectionViewSource x:Key="SortedTimeline" Source="{Binding TimelineFeed}">
+			<CollectionViewSource.SortDescriptions>
+				<componentModel:SortDescription PropertyName="CreatedAt" Direction="Descending"/>
+			</CollectionViewSource.SortDescriptions>
+		</CollectionViewSource>
+		
+	</Window.Resources>
+	<DockPanel>
+		<Border DockPanel.Dock="Top" BorderBrush="#FF666666" BorderThickness="0" Margin="3" Padding="2">
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition />
+					<ColumnDefinition Width="Auto" />
+				</Grid.ColumnDefinitions>
+				<TextBox Text="{Binding NewTweetText}" AcceptsReturn="True" AcceptsTab="True" TextWrapping="Wrap" VerticalAlignment="Stretch" />
+				<Button Content="Tweet" Grid.Column="1" Margin="2,0" Command="{x:Static slimTweet:ViewModel.NewTweetCommand}"/>
+			</Grid>
+		</Border>
+
+		<TabControl DockPanel.Dock="Top" Visibility="{Binding IsAddNewAccountVisible, Converter={StaticResource NotBooleanToVisibilityConverter}}"
+					Margin="2">
+			<TabItem Header="Timeline">
+				<ListBox ItemsSource="{Binding Source={StaticResource SortedTimeline}}" VirtualizingPanel.IsContainerVirtualizable="True"
+						 VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.ScrollUnit="Item"
+						 HorizontalContentAlignment="Stretch"
+						 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+						 BorderThickness="0">
+					<ListBox.ItemContainerStyle>
+						<Style TargetType="ListBoxItem">
+							<Style.Resources>
+								<SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent" />
+								<SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="Transparent" />
+							</Style.Resources>
+							<Style.Triggers>
+								<Trigger Property="IsSelected" Value="True">
+									<Setter Property="Background" Value="Transparent"/>
+								</Trigger>
+							</Style.Triggers>
+						</Style>
+					</ListBox.ItemContainerStyle>
+					<ListBox.ItemTemplate>
+						<HierarchicalDataTemplate ItemsSource="{Binding Children, IsAsync=True}">
+							<Border BorderBrush="#FF666666" BorderThickness="0,0,0,1" Margin="1">
+								<Grid Margin="1">
+									<Grid.RowDefinitions>
+										<RowDefinition Height="*" MaxHeight="75" />
+										<RowDefinition Height="Auto"/>
+										<RowDefinition Height="Auto"/>
+									</Grid.RowDefinitions>
+
+									<Grid.ColumnDefinitions>
+										<ColumnDefinition Width="Auto" />
+										<ColumnDefinition Width="*" />
+									</Grid.ColumnDefinitions>
+
+									<!--<Border BorderBrush="#FF555555" Margin="1" BorderThickness="1" CornerRadius="2">-->
+									<Image Source="{Binding ., IsAsync=True,Converter={StaticResource ImageUrlSourceConverter}}" Stretch="None"
+										   MaxWidth="60" MaxHeight="60">
+										<Image.Effect>
+											<DropShadowEffect ShadowDepth="2" BlurRadius="3" Color="#FF222222" RenderingBias="Quality"/>
+										</Image.Effect>
+									</Image>
+									<!--</Border-->
+
+									<Grid Grid.Column="1" Margin="5,0,2,0">
+										<Grid.ColumnDefinitions>
+											<ColumnDefinition Width="Auto"/>
+											<ColumnDefinition />
+										</Grid.ColumnDefinitions>
+
+										<StackPanel Orientation="Vertical" Margin="0,0,2,0">
+											<TextBlock Text="{Binding ScreenName}"  HorizontalAlignment="Left" FontWeight="Bold" />
+											<TextBlock Text="{Binding Name}"		HorizontalAlignment="Left" />
+										</StackPanel>
+
+										<TextBlock Text="{Binding Text}"  TextWrapping="Wrap" Grid.Column="1"/>
+									</Grid>
+
+									<UniformGrid Columns="2" Grid.ColumnSpan="2" Grid.Row="1" Margin="5,0,2,1">
+										<StackPanel Orientation="Horizontal" Margin="1">
+											<StackPanel Orientation="Horizontal" Margin="0,0,2,0">
+												<TextBlock Text="RT"/>
+												<TextBlock Text="{Binding RetweetCount}" Margin="0,0,2,0"/>
+											</StackPanel>
+											<StackPanel Orientation="Horizontal">
+												<TextBlock Text="F "/>
+												<TextBlock Text="{Binding FavoriteCount}" Margin="0,0,2,0"/>
+											</StackPanel>
+											
+										</StackPanel>
+										<TextBlock Text="{Binding CreatedAt, Converter={StaticResource RelativeTimeConverter}}" HorizontalAlignment="Right" Margin="0,0,3,0"/>
+									</UniformGrid>
+								</Grid>
+							</Border>
+						</HierarchicalDataTemplate>
+					</ListBox.ItemTemplate>
+				</ListBox>
+			</TabItem>
+
+			<TabItem Header="Mentions">
+				<ListBox ItemsSource="{Binding MentionsFeed}">
+					<!--<ListBox.ItemTemplate>
+						<DataTemplate>
+							<StackPanel Orientation="Horizontal">
+								<TextBlock Text="{Binding Author}" Margin="1" Foreground="Blue"/>
+								<TextBlock Text="{Binding Text}" />
+							</StackPanel>
+
+						</DataTemplate>
+					</ListBox.ItemTemplate>-->
+				</ListBox>
+			</TabItem>
+
+			<TabItem Header="Messages">
+				<TabControl ItemsSource="{Binding MessageConversations}">
+
+				</TabControl>
+			</TabItem>
+
+			<TabItem Header="Followers">
+
+			</TabItem>
+
+			<TabItem Header="Favorites">
+
+			</TabItem>
+		</TabControl>
+		<StackPanel Orientation="Vertical" 
+					HorizontalAlignment="Center"
+					VerticalAlignment="Center"
+					Visibility="{Binding IsAuthorizeNewAccountVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+			<Button Content="Authorize account.." Command="{x:Static slimTweet:ViewModel.AuthorizeNewAccountCommand}" Margin="2"/>
+			<StackPanel Orientation="Horizontal">
+				<TextBlock Text="Click authorize account and enter the verification# from the site:" Margin="2"/>
+				<TextBox Text="{Binding VerificationText}" Width="75" Margin="2"/>
+				<Button Content="Add!" Command="{x:Static slimTweet:ViewModel.AddNewAccountCommand}" Margin="2"/>
+				<!-- Visibility="{Binding IsAddNewAccountVisible, Converter={StaticResource BooleanToVisibilityConverter}}"></Button>-->
+			</StackPanel>
+		</StackPanel>
+		<!--<StatusBar DockPanel.Dock="Bottom">
+			<TextBlock Text="Rate limit status:"/>
+			<TextBlock Text="{Binding RateLimit}"/>
+		</StatusBar>-->
+	</DockPanel>
+</Window>
